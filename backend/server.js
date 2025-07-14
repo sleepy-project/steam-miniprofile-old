@@ -6,17 +6,26 @@ const fetch = require("node-fetch");
 const steamID = require('steamid');
 const express = require("express");
 const app = express();
+start = new Date().toISOString();
 let distinctCount = 0;
 
 // we've started you off with Express
 // but feel free to use whatever libs or frameworks you'd like through `package.json`.
 
 // http://expressjs.com/en/starter/static-files.html
-app.use(express.static("public"));
+// app.use(express.static("public"));
 
 // http://expressjs.com/en/starter/ba-sic-routing.html
 app.get("/", function (request, response) {
-  response.sendFile(__dirname + "/index.html");
+  // response.sendFile(__dirname + "/index.html");
+  response.send(`
+steam-miniprofile-proxy
+<br/>
+https://github.com/sleepy-project/steam-miniprofile
+<br/>
+Requests count since ${start} (UTC): ${distinctCount}
+
+`);
 });
 
 app.get("/miniprofile/:steamid", function (request, response) {
@@ -73,5 +82,5 @@ app.get("/miniprofile/:steamid", function (request, response) {
 
 // 监听 :3000
 const listener = app.listen(3000, function () {
-  console.log("Your app is listening on port " + listener.address().port);
+  console.log("Steam Miniprofile Proxy is running on :" + listener.address().port);
 });
