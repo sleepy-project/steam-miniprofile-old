@@ -1,7 +1,7 @@
 {
-  "name": "hello-express",
-  "version": "0.0.2",
-  "description": "A simple Node app built on Express, instantly up and running.",
+  "name": "steam-miniprofile",
+  "version": "0.0.0",
+  "description": "A simple Node app built on Express, used to proxy steam miniprofile api",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -15,14 +15,14 @@
     "node": "^16.0.0"
   },
   "repository": {
-    "url": "https://glitch.com/edit/#!/universal-cors-proxy"
+    "url": "https://github.com/sleepy-project/steam-miniprofile"
   },
   "license": "MIT",
   "keywords": [
     "node",
-    "glitch",
     "express",
     "cors",
+    "steam",
     "proxy"
   ]
 }

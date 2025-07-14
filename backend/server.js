@@ -16,84 +16,62 @@ app.use(express.static("public"));
 
 // http://expressjs.com/en/starter/ba-sic-routing.html
 app.get("/", function (request, response) {
-  response.sendFile(__dirname + "/views/index.html");
+  response.sendFile(__dirname + "/index.html");
 });
 
-app.get("/:url", function (request, response) {
-  if (
-    !request.params.url.startsWith(
-      "https://steamcommunity.com/miniprofile/"
-    )
-  ) {
-    response.send("500: Domain not allowed");
+app.get("/miniprofile/:steamid", function (request, response) {
+  const requestedSteamId = request.params.steamid;
+  const language = request.query.l || "schinese";
+  const appId = request.query.appId;
+
+  console.log("Processing SteamID:", requestedSteamId);
+
+  // SteamID 转换
+  let bigIntdSteamId;
+  try {
+    bigIntdSteamId = new steamID(requestedSteamId).getBigIntID();
+  } catch (e) {
+    console.error("SteamID conversion error:", e);
+    return response.status(400).send("Invalid SteamID format");
   }
 
-  var steamIdIndex = request.params.url.lastIndexOf('/');
-  var requestedSteamId = request.params.url.substring(steamIdIndex + 1);
-  var language = request.query.l;
-  var appId = request.query.appId;
-  
-  if(!language) {
-    language = "en";
-  }
-  
-  console.log(requestedSteamId);
-  
-  let bigIntdSteamId
-  try {
-    bigIntdSteamId = new steamID(requestedSteamId).getBigIntID()
-  } catch (e) {
-    console.error("Error converting steam id")
-    console.error(e)
-    return
-  }
-  
   const convertedSteamId = Number(bigIntdSteamId & BigInt(0xFFFFFFFF));
-  let convertedUrl = request.params.url.substring(0, steamIdIndex + 1) + convertedSteamId + "?l=" + language;
-  
-  if(appId) {
-    convertedUrl += '&appid=' + appId;
-  }
-  
-  if(request.headers["user-agent"] == null || !request.headers["user-agent"].startsWith("pipedream")) {
-     distinctCount++;
-    console.log("user: " + convertedUrl + " host:" + request.headers["origin"] + " " + distinctCount)
- }
-  
-  var langCookie = 'Steam_Language=' + language;
-  
-  const opts = {
-    mode: "no-cors",
+
+  // 构建目标 URL
+  let targetUrl = `https://steamcommunity.com/miniprofile/${convertedSteamId}?l=${language}`;
+  if (appId) targetUrl += `&appid=${appId}`;
+
+  // 请求计数（可选）
+  distinctCount++;
+
+  console.log(`[#${distinctCount}] Proxying to:`, targetUrl);
+
+  // 代理请求
+  fetch(targetUrl, {
     headers: {
-      // cookie: langCookie
+      "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0"
     }
-  }
-  
-  fetch(convertedUrl, opts)
-    .then(function (res) {
-      let merged = {
-        ...res.headers,
-        ...{
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "DELETE,GET,PATCH,POST,PUT",
-          "Access-Control-Allow-Headers": "Content-Type,Authorization",
-          "Cache-Control": "public, s-maxage=60",
-          "CDN-Cache-Control": "public, s-maxage=60",
-          "Vercel-CDN-Cache-Control": "public, s-maxage=3600"
-        },
+  })
+    .then(res => {
+      // 处理响应头
+      const headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "public, max-age=60",
+        ...Object.fromEntries(res.headers.entries())
       };
-      response.set(merged);
-      res.text().then((data) => {
-        response.send(data);
-      });
+      response.set(headers);
+
+      // 返回内容
+      return res.text();
     })
-    .catch((err) => {
-      console.error("err: %o", err);
-      response.send("500: Guru Meditation Error");
+    .then(data => response.send(data))
+    .catch(err => {
+      console.error("Proxy error:", err);
+      response.status(500).send("Proxy error");
     });
 });
 
-// listen for requests :)
+// 监听 :3000
 const listener = app.listen(3000, function () {
   console.log("Your app is listening on port " + listener.address().port);
 });
