@@ -1,3 +1,7 @@
+本仓库已弃用, 请移步 **[sleepy-project/steam-profile-json](https://github.com/sleepy-project/steam-profile-json)**
+
+---
+
 # steam-miniprofile
 
 sleepy 使用的 steam miniprofile 反代部署
